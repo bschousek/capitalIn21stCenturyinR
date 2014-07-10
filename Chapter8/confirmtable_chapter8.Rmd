@@ -1,19 +1,51 @@
-```{r loadCh0,message=FALSE}
+```{r loadCh8,message=FALSE, cache=TRUE}
 library(ggplot2)
 library(xlsx)
 library(reshape2)
-```
-
-```{r DetailsWTIDSeries, dependson="loadCh0", message=FALSE}
 ## Table DetailsWTIDSeries
 fname="../Piketty2014FiguresTables/Chapter8TablesFigures.xlsx"
 tabname="DetailsWTIDSeries"
+dWTIDnames = read.xlsx(fname,sheetName=tabname,
+                       rowIndex=4:5,colIndex=1:126,header=TRUE)
+names(dWTIDnames)[1]<-"YEAR"
+dWTID = read.xlsx(fname,sheetName=tabname,rowIndex=7:147,
+                  colIndex=1:126,header=TRUE,
+                  keepFormulas=TRUE,colClasses="character")
+names(dWTID)<-names(dWTIDnames)
+tabname="TS8.1"
+wagerawTS81 = read.xlsx(fname,sheetName=tabname,rowIndex=6:116,colIndex=1:6,header=FALSE,keepFormulas=TRUE)
+names(wagerawTS81) = c("year","top_10percent_income_share","top_1percent_income_share",
+                "top_0.1percent_income_share", "top_10percent_wage_share", "top_1percent_wage_share")
 
-dWTID = read.xlsx(fname,sheetName=tabname,rowIndex=4:147,colIndex=1:126,header=TRUE,keepFormulas=TRUE)
-dWTID<-dWTID[c(-1,-2),]
-names(dWTID)[1]<-"YEAR"
+
 columns.France<-c(1,grep("France",names(dWTID)))
-recoTS81<-dWTID[,columns.France]
+rawTS81<-dWTID[,columns.France]
+```
+
+```{r DetailsWTIDSeries, dependson="loadch8", message=FALSE}
+
+
+incomeTS81<-data.frame(year=as.numeric(rawTS81$YEAR))
+incomeTS81$top_10percent_income_share<-
+  as.numeric(as.character(rawTS81$France.Top.10..income.share))
+incomeTS81$top_1percent_income_share<-
+  as.numeric(as.character(rawTS81$France.Top.1..income.share))
+incomeTS81$France.Top.10..income.share<-
+  as.numeric(as.character(rawTS81$France.Top.0.1..income.share))
+incomeTS81$top_0.1percent_income_share<-
+  as.numeric(as.character(rawTS81$France.Top.0.1..income.share))
+
+wageTS81<-data.frame(year=as.numeric(seq(1900,2010)))
+wageTS81$top_10percent_wage_share<-
+  as.numeric(as.character(wagerawTS81$top_10percent_wage_share))
+wageTS81$top_1percent_wage_share<-
+  as.numeric(as.character(wagerawTS81$top_1percent_wage_share))
+
+recoTS81<-merge(incomeTS81,wageTS81,all.x=T,all.y=T)
+#recoTS81$year<-as.numeric(recoTS81$year)
+recoTS81<-recoTS81[recoTS81$year>1909,]
+
 columns.USA<-c(1,grep("United.States",names(dWTID)))
 recoTS82<-dWTID[,columns.USA]
+
 ```
