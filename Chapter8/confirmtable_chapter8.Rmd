@@ -1,3 +1,7 @@
+
+First we load all the data necessary from the Excel file. The data is imported using keepFormulas=TRUE to highlight where there is actual numerical data as compared to calculated data. When converted to numeric, the formulas in the Excel data come in as NA.
+
+
 ```{r loadCh8,message=FALSE, cache=TRUE}
 library(ggplot2)
 library(xlsx)
@@ -22,18 +26,18 @@ columns.France<-c(1,grep("France",names(dWTID)))
 rawTS81<-dWTID[,columns.France]
 ```
 
+Next we munge the data into the same format as the table ts81, with the same column names etc.
+
 ```{r DetailsWTIDSeries, dependson="loadch8", message=FALSE}
 
 
-incomeTS81<-data.frame(year=as.numeric(rawTS81$YEAR))
+incomeTS81<-data.frame(year=rawTS81$YEAR)
 incomeTS81$top_10percent_income_share<-
-  as.numeric(as.character(rawTS81$France.Top.10..income.share))
+  as.numeric(as.character(rawTS81$France.Top.10..income.share))/100
 incomeTS81$top_1percent_income_share<-
-  as.numeric(as.character(rawTS81$France.Top.1..income.share))
-incomeTS81$France.Top.10..income.share<-
-  as.numeric(as.character(rawTS81$France.Top.0.1..income.share))
+  as.numeric(as.character(rawTS81$France.Top.1..income.share))/100
 incomeTS81$top_0.1percent_income_share<-
-  as.numeric(as.character(rawTS81$France.Top.0.1..income.share))
+  as.numeric(as.character(rawTS81$France.Top.0.1..income.share))/100
 
 wageTS81<-data.frame(year=as.numeric(seq(1900,2010)))
 wageTS81$top_10percent_wage_share<-
@@ -42,10 +46,36 @@ wageTS81$top_1percent_wage_share<-
   as.numeric(as.character(wagerawTS81$top_1percent_wage_share))
 
 recoTS81<-merge(incomeTS81,wageTS81,all.x=T,all.y=T)
-#recoTS81$year<-as.numeric(recoTS81$year)
+recoTS81$year<-as.numeric(levels(recoTS81$year))
 recoTS81<-recoTS81[recoTS81$year>1909,]
+calculatedTS81<-is.na(recoTS81)
 
 columns.USA<-c(1,grep("United.States",names(dWTID)))
 recoTS82<-dWTID[,columns.USA]
+
+```
+
+Here follow many individual fixes to reproduce table 8.1. Note that these fixes are intended to reproduce precisely what is reported in table 8.1 without regard to whether the fixes are appropriate or not. The calculations are duplicated and documented in the spirit of reproducible data.
+
+``` {r fillinblanks}
+
+
+#1910 data for income share is copied from 1905 DWTID
+incomeTS81[incomeTS81$year==1910,]<-c(1910,.465,.205,.095)
+#1913 data is 1910 data plus 0.5%
+incomeTS81[incomeTS81$year==1913,]<-c(1913,incomeTS81[incomeTS81$year==1910,-1]+0.005)
+#1911 data is average of 1910 and 1913 data
+newdata<-(incomeTS81[incomeTS81$year==1910,-1]+incomeTS81[incomeTS81$year==1913,-1])/2
+incomeTS81[incomeTS81$year==1911,]<-c(1911,newdata)
+#1916 10 percent data is scaled from 1916 1% data by ratio of 1919 10% to 1919 1%
+
+#1914 data is average of 1913 and 1916        
+newdata<-(incomeTS81[incomeTS81$year==1913,-1]+incomeTS81[incomeTS81$year==1916,-1])/2
+incomeTS81[incomeTS81$year==1914,]<-c(1911,newdata)
+#1912 data is average of 1911 and 1914 data
+newdata<-(incomeTS81[incomeTS81$year==1911,-1]+incomeTS81[incomeTS81$year==1914,-1])/2
+incomeTS81[incomeTS81$year==1911,]<-c(1911,newdata)
+
+
 
 ```

@@ -215,3 +215,11 @@ pip-log.txt
 .mr.developer.cfg
 Chapter8/.Rhistory
 .Rproj.user
+
+*.RData
+
+*.rdb
+
+*.rdx
+
+Chapter8/confirmtable_chapter8_cache/html/__packages
